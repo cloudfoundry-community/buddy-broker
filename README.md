@@ -17,10 +17,9 @@ That's it!
 ### Registering broker
 
 ```
-$ cf create-service-broker buddy-space1 ${username} ${password} ${buddy_url}/space1
+$ cf create-service-broker buddy-space1 ${username} ${password} ${buddy_url}/space1 --space-scoped
 ```
 
 This will add suffix to your service broker ids/name. ie. redis-space1.
 
 **Note** Username and password of broker is transparently passed to broker
-
