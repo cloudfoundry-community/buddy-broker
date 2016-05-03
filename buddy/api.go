@@ -9,7 +9,7 @@ import (
 
 func New(logger lager.Logger) http.Handler {
 	router := mux.NewRouter()
-	handler := buddyHandler{Logger: logger}
+	handler := BuddyHandler{Logger: logger}
 	handler.LoadBackendBrokerFromEnv()
 	router.HandleFunc("/{suffix}/v2/catalog", handler.catalog).Methods("GET")
 	router.HandleFunc("/{suffix}/v2/service_instances/{instance_id}", handler.provision).Methods("PUT")
@@ -19,6 +19,5 @@ func New(logger lager.Logger) http.Handler {
 
 	router.HandleFunc("/{suffix}/v2/service_instances/{instance_id}/service_bindings/{binding_id}", handler.bind).Methods("PUT")
 	router.HandleFunc("/{suffix}/v2/service_instances/{instance_id}/service_bindings/{binding_id}", handler.unbind).Methods("DELETE")
-	router.HandleFunc("/v2/catalog", handler.reject)
 	return router
 }

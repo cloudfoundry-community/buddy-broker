@@ -15,8 +15,8 @@ import (
 
 var statusUnprocessableEntity = 422
 
-type buddyHandler struct {
-	backendBroker backendBroker
+type BuddyHandler struct {
+	BackendBroker backendBroker
 	Logger        lager.Logger
 }
 
@@ -25,11 +25,11 @@ type ErrorResponse struct {
 	Description string `json:"description"`
 }
 
-func (b buddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
+func (b BuddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	suffix := "-" + vars["suffix"]
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/v2/catalog", b.backendBroker.URL)
+	url := fmt.Sprintf("%s/v2/catalog", b.BackendBroker.URL)
 	backendReq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		b.Logger.Error("backend-catalog-req", err)
@@ -49,7 +49,6 @@ func (b buddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer resp.Body.Close()
-
 	if resp.StatusCode == http.StatusUnauthorized {
 		b.respond(w, http.StatusUnauthorized, ErrorResponse{
 			Description: "Not authorized",
@@ -57,6 +56,8 @@ func (b buddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	}
 
 	jsonData, err := ioutil.ReadAll(resp.Body)
+	b.Logger.Info(string(jsonData))
+	b.Logger.Info(b.BackendBroker.URL)
 	var catalog brokerapi.CatalogResponse
 	err = json.Unmarshal(jsonData, &catalog)
 	if err != nil {
@@ -75,7 +76,7 @@ func (b buddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	b.respond(w, http.StatusOK, catalog)
 }
 
-func (b buddyHandler) provision(w http.ResponseWriter, req *http.Request) {
+func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	suffix := "-" + vars["suffix"]
 	instanceID := vars["instance_id"]
@@ -93,7 +94,7 @@ func (b buddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 
 	var provisioningResponse brokerapi.ProvisioningResponse
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/v2/service_instances/%s", b.backendBroker.URL, instanceID)
+	url := fmt.Sprintf("%s/v2/service_instances/%s", b.BackendBroker.URL, instanceID)
 	buffer := &bytes.Buffer{}
 	if err := json.NewEncoder(buffer).Encode(details); err != nil {
 		b.Logger.Error("backend-provision-encode-details", err)
@@ -136,7 +137,7 @@ func (b buddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 			b.Logger.Info("provision-success", lager.Data{
 				"instance-id": instanceID,
 				"plan-id":     details.PlanID,
-				"backend-uri": b.backendBroker.URI,
+				"backend-uri": b.BackendBroker.URL,
 			})
 			b.respond(w, httpResp.StatusCode, provisioningResponse)
 			return
@@ -144,12 +145,12 @@ func (b buddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (b buddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
+func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/v2/service_instances/%s?plan_id=%s&service_id=%s", b.backendBroker.URL, instanceID, req.FormValue("plan_id"), req.FormValue("service_id"))
+	url := fmt.Sprintf("%s/v2/service_instances/%s?plan_id=%s&service_id=%s", b.BackendBroker.URL, instanceID, req.FormValue("plan_id"), req.FormValue("service_id"))
 	buffer := &bytes.Buffer{}
 
 	backendReq, err := http.NewRequest("DELETE", url, buffer)
@@ -178,12 +179,12 @@ func (b buddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(httpResp.StatusCode)
 }
 
-func (b buddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
+func (b BuddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/v2/service_instances/%s/last_operation", b.backendBroker.URL, instanceID)
+	url := fmt.Sprintf("%s/v2/service_instances/%s/last_operation", b.BackendBroker.URL, instanceID)
 	buffer := &bytes.Buffer{}
 
 	backendReq, err := http.NewRequest("GET", url, buffer)
@@ -213,12 +214,12 @@ func (b buddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(httpResp.StatusCode)
 }
 
-func (b buddyHandler) update(w http.ResponseWriter, req *http.Request) {
+func (b BuddyHandler) update(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/v2/service_instances/%s", b.backendBroker.URL, instanceID)
+	url := fmt.Sprintf("%s/v2/service_instances/%s", b.BackendBroker.URL, instanceID)
 	buffer := &bytes.Buffer{}
 
 	backendReq, err := http.NewRequest("PATCH", url, buffer)
@@ -248,13 +249,13 @@ func (b buddyHandler) update(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(httpResp.StatusCode)
 }
 
-func (b buddyHandler) bind(w http.ResponseWriter, req *http.Request) {
+func (b BuddyHandler) bind(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 	bindID := vars["binding_id"]
 
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/v2/service_instances/%s/service_bindings/%s", b.backendBroker.URL, instanceID, bindID)
+	url := fmt.Sprintf("%s/v2/service_instances/%s/service_bindings/%s", b.BackendBroker.URL, instanceID, bindID)
 	buffer := &bytes.Buffer{}
 	backendReq, err := http.NewRequest("PUT", url, buffer)
 	if err != nil {
@@ -284,13 +285,13 @@ func (b buddyHandler) bind(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func (b buddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
+func (b BuddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
 
 	client := &http.Client{}
-	url := fmt.Sprintf("%s/v2/service_instances/%s/service_bindings/%s?plan_id=%s&service_id=%s", b.backendBroker.URL, instanceID, bindingID, req.FormValue("plan_id"), req.FormValue("service_id"))
+	url := fmt.Sprintf("%s/v2/service_instances/%s/service_bindings/%s?plan_id=%s&service_id=%s", b.BackendBroker.URL, instanceID, bindingID, req.FormValue("plan_id"), req.FormValue("service_id"))
 	buffer := &bytes.Buffer{}
 
 	backendReq, err := http.NewRequest("DELETE", url, buffer)
@@ -320,12 +321,12 @@ func (b buddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(httpResp.StatusCode)
 }
 
-func (b buddyHandler) reject(w http.ResponseWriter, r *http.Request) {
+func (b BuddyHandler) reject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte("Please provide a suffix in url"))
 }
 
-func (b buddyHandler) respond(w http.ResponseWriter, status int, response interface{}) {
+func (b BuddyHandler) respond(w http.ResponseWriter, status int, response interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
