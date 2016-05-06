@@ -91,8 +91,6 @@ func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 
 	details.ServiceID = strings.TrimSuffix(details.ServiceID, suffix)
 	details.PlanID = strings.TrimSuffix(details.PlanID, suffix)
-
-	var provisioningResponse brokerapi.ProvisioningResponse
 	client := &http.Client{}
 	url := fmt.Sprintf("%s/v2/service_instances/%s", b.BackendBroker.URL, instanceID)
 	buffer := &bytes.Buffer{}
@@ -122,27 +120,10 @@ func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	defer httpResp.Body.Close()
-
-	if httpResp.StatusCode == http.StatusCreated || httpResp.StatusCode == http.StatusOK {
-		var jsonData []byte
-		jsonData, err = ioutil.ReadAll(httpResp.Body)
-
-		if err = json.Unmarshal(jsonData, &provisioningResponse); err != nil {
-			b.respond(w, http.StatusInternalServerError, ErrorResponse{
-				Description: err.Error(),
-			})
-			return
-		}
-		if err == nil {
-			b.Logger.Info("provision-success", lager.Data{
-				"instance-id": instanceID,
-				"plan-id":     details.PlanID,
-				"backend-uri": b.BackendBroker.URL,
-			})
-			b.respond(w, httpResp.StatusCode, provisioningResponse)
-			return
-		}
-	}
+	var data []byte
+	data, err = ioutil.ReadAll(httpResp.Body)
+	w.Write(data)
+	w.WriteHeader(httpResp.StatusCode)
 }
 
 func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
