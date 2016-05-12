@@ -23,13 +23,16 @@ while [[ "${orgs_next_page_url}" != "null" ]]; do
     org_name=$(echo $orgs_page | jq -r ".resources[$org].entity.name")
     spaces_next_page_url=$(echo $orgs_page | jq -r ".resources[$org].entity.spaces_url")
     echo ${org_name} ...
-    
+
     while [[ "${spaces_next_page_url}" != "null" ]]; do
       spaces_page=$(cf curl $spaces_next_page_url)
       spaces_next_page_url=$(echo $spaces_page | jq -r .next_url)
       spaces_page_count=$(echo $spaces_page | jq -r ".resources | length")
       for (( space = 0; space < ${spaces_page_count}; space++ )); do
-        echo ${org_name} "/" $(echo $spaces_page | jq -r ".resources[$space].entity.name")
+        space_guid=$(echo $spaces_page | jq -r ".resources[$space].metadata.guid")
+        space_name=$(echo $spaces_page | jq -r ".resources[$space].entity.name")
+        echo ${org_name} "/" ${space_name}
+        cf curl "/v2/service_brokers?q=space_guid:${space_guid}"
       done
     done
   done
