@@ -16,7 +16,7 @@ fi
 set -e # fail fast
 
 current_org=$(cat ~/.cf/config.json | jq -r ".OrganizationFields.Name")
-current_space=$(cat ~/.cf/config.json | jq -r ".OrganizationFields.Name")
+current_space=$(cat ~/.cf/config.json | jq -r ".SpaceFields.Name")
 
 echo "Run the following command to return to current org/space:"
 echo "cf target -o \"${current_org}\" -s \"${current_space}\""
@@ -48,6 +48,7 @@ while [[ "${orgs_next_page_url}" != "null" ]]; do
         space_brokers_count=$(echo $space_brokers | jq -r ".resources | length")
         echo ${space_broker_name} ${space_broker_url} "-" ${space_brokers_count}
         space_broker_guid_found=
+
         for (( bkr = 0; bkr < ${space_brokers_count}; bkr++ )); do
           bkr_guid=$(echo $space_brokers | jq -r ".resources[$bkr].metadata.guid")
           bkr_name=$(echo $space_brokers | jq -r ".resources[$bkr].entity.name")
