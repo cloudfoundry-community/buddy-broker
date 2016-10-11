@@ -1,0 +1,7 @@
+applications:
+- name: buddy-broker
+  instances: 1
+  memory: 128M
+  disk_quota: 256M
+  stack: cflinuxfs2
+  buildpack: go_buildpack

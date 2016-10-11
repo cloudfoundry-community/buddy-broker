@@ -7,7 +7,7 @@ Cloud Foundry recently added private service brokers! This is great but that bro
 ## Deploying
 
 ```
-cf push buddy-broker -m 128M -k 256M --no-start -n buddy-broker-my-service
+cf push buddy-broker --no-start -n buddy-broker-my-service
 cf set-env buddy-broker BACKEND_BROKER ${broker_url}
 cf start buddy-broker
 ```
