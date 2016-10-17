@@ -122,8 +122,8 @@ func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 	defer httpResp.Body.Close()
 	var data []byte
 	data, err = ioutil.ReadAll(httpResp.Body)
-	w.Write(data)
 	w.WriteHeader(httpResp.StatusCode)
+	w.Write(data)
 }
 
 func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
@@ -156,8 +156,8 @@ func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
 
 	var data []byte
 	data, err = ioutil.ReadAll(httpResp.Body)
-	w.Write(data)
 	w.WriteHeader(httpResp.StatusCode)
+	w.Write(data)
 }
 
 func (b BuddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
@@ -191,8 +191,8 @@ func (b BuddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 
 	var data []byte
 	data, err = ioutil.ReadAll(httpResp.Body)
-	w.Write(data)
 	w.WriteHeader(httpResp.StatusCode)
+	w.Write(data)
 }
 
 func (b BuddyHandler) update(w http.ResponseWriter, req *http.Request) {
@@ -226,8 +226,8 @@ func (b BuddyHandler) update(w http.ResponseWriter, req *http.Request) {
 
 	var data []byte
 	data, err = ioutil.ReadAll(httpResp.Body)
-	w.Write(data)
 	w.WriteHeader(httpResp.StatusCode)
+	w.Write(data)
 }
 
 func (b BuddyHandler) bind(w http.ResponseWriter, req *http.Request) {
@@ -261,8 +261,8 @@ func (b BuddyHandler) bind(w http.ResponseWriter, req *http.Request) {
 
 	var data []byte
 	data, err = ioutil.ReadAll(httpResp.Body)
-	w.Write(data)
 	w.WriteHeader(httpResp.StatusCode)
+	w.Write(data)
 	return
 }
 
@@ -298,8 +298,8 @@ func (b BuddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
 
 	var data []byte
 	data, err = ioutil.ReadAll(httpResp.Body)
-	w.Write(data)
 	w.WriteHeader(httpResp.StatusCode)
+	w.Write(data)
 }
 
 func (b BuddyHandler) reject(w http.ResponseWriter, r *http.Request) {
