@@ -16,7 +16,7 @@ var _ = Describe("Backend", func() {
 			url := "https://localhost"
 			logger := lager.NewLogger("buddy-backend-tests")
 			os.Setenv("BACKEND_BROKER", url)
-			handler := &BuddyHandler{Logger: logger}
+			handler := &AppHandler{Logger: logger}
 			handler.LoadBackendBrokerFromEnv()
 			Expect(handler.BackendBroker.URL).Should(Equal(url))
 

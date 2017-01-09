@@ -16,7 +16,7 @@ type backendBroker struct {
 
 // LoadBackendBrokersFromEnv allows registration of backend brokers via environment variables
 // BACKEND_BROKER=https://hostname1
-func (b *BuddyHandler) LoadBackendBrokerFromEnv() {
+func (b *AppHandler) LoadBackendBrokerFromEnv() {
 	for _, e := range os.Environ() {
 		pair := strings.Split(e, "=")
 		if pair[0] == "BACKEND_BROKER" {

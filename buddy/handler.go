@@ -15,17 +15,18 @@ import (
 
 var statusUnprocessableEntity = 422
 
-type BuddyHandler struct {
+// AppHandler is the main app
+type AppHandler struct {
 	BackendBroker backendBroker
 	Logger        lager.Logger
 }
 
-type ErrorResponse struct {
+type errorResponse struct {
 	Error       string `json:"error,omitempty"`
 	Description string `json:"description"`
 }
 
-func (b BuddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
+func (b AppHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	suffix := "-" + vars["suffix"]
 	client := &http.Client{}
@@ -33,7 +34,7 @@ func (b BuddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	backendReq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		b.Logger.Error("backend-catalog-req", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -43,14 +44,14 @@ func (b BuddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	resp, err := client.Do(backendReq)
 	if err != nil {
 		b.Logger.Error("backend-catalog-resp", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusUnauthorized {
-		b.respond(w, http.StatusUnauthorized, ErrorResponse{
+		b.respond(w, http.StatusUnauthorized, errorResponse{
 			Description: "Not authorized",
 		})
 	}
@@ -61,7 +62,7 @@ func (b BuddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	var catalog brokerapi.CatalogResponse
 	err = json.Unmarshal(jsonData, &catalog)
 	if err != nil {
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -76,18 +77,27 @@ func (b BuddyHandler) catalog(w http.ResponseWriter, req *http.Request) {
 	b.respond(w, http.StatusOK, catalog)
 }
 
-func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
+func (b AppHandler) provision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	suffix := "-" + vars["suffix"]
 	instanceID := vars["instance_id"]
 
-	var details brokerapi.ProvisionDetails
+	var details struct {
+		ServiceID        string      `json:"service_id"`
+		PlanID           string      `json:"plan_id"`
+		OrganizationGUID string      `json:"organization_guid"`
+		SpaceGUID        string      `json:"space_guid"`
+		Parameters       interface{} `json:"parameters,omitempty"`
+	}
+
 	if err := json.NewDecoder(req.Body).Decode(&details); err != nil {
-		b.respond(w, statusUnprocessableEntity, ErrorResponse{
+		b.respond(w, statusUnprocessableEntity, errorResponse{
 			Description: err.Error(),
 		})
 		return
 	}
+
+	fmt.Printf("provision: decoded details: %#v\n", details)
 
 	details.ServiceID = strings.TrimSuffix(details.ServiceID, suffix)
 	details.PlanID = strings.TrimSuffix(details.PlanID, suffix)
@@ -96,15 +106,18 @@ func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 	buffer := &bytes.Buffer{}
 	if err := json.NewEncoder(buffer).Encode(details); err != nil {
 		b.Logger.Error("backend-provision-encode-details", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
 	}
+
+	fmt.Println("provision: encoded details:", buffer.String())
+
 	backendReq, err := http.NewRequest("PUT", url, buffer)
 	if err != nil {
 		b.Logger.Error("backend-provision-req", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -114,7 +127,7 @@ func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 	httpResp, err := client.Do(backendReq)
 	if err != nil {
 		b.Logger.Error("backend-provision-resp", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -126,7 +139,7 @@ func (b BuddyHandler) provision(w http.ResponseWriter, req *http.Request) {
 	w.Write(data)
 }
 
-func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
+func (b AppHandler) deprovision(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
@@ -137,7 +150,7 @@ func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
 	backendReq, err := http.NewRequest("DELETE", url, buffer)
 	if err != nil {
 		b.Logger.Error("backend-deprovision-req", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -147,7 +160,7 @@ func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
 	httpResp, err := client.Do(backendReq)
 	if err != nil {
 		b.Logger.Error("backend-deprovision-resp", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -160,7 +173,7 @@ func (b BuddyHandler) deprovision(w http.ResponseWriter, req *http.Request) {
 	w.Write(data)
 }
 
-func (b BuddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
+func (b AppHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
@@ -171,7 +184,7 @@ func (b BuddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	backendReq, err := http.NewRequest("GET", url, buffer)
 	if err != nil {
 		b.Logger.Error("backend-lastoperations-req", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -182,7 +195,7 @@ func (b BuddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	httpResp, err := client.Do(backendReq)
 	if err != nil {
 		b.Logger.Error("backend-lastoperations-resp", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -195,7 +208,7 @@ func (b BuddyHandler) lastOperation(w http.ResponseWriter, req *http.Request) {
 	w.Write(data)
 }
 
-func (b BuddyHandler) update(w http.ResponseWriter, req *http.Request) {
+func (b AppHandler) update(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 
@@ -206,7 +219,7 @@ func (b BuddyHandler) update(w http.ResponseWriter, req *http.Request) {
 	backendReq, err := http.NewRequest("PATCH", url, buffer)
 	if err != nil {
 		b.Logger.Error("backend-update-req", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -217,7 +230,7 @@ func (b BuddyHandler) update(w http.ResponseWriter, req *http.Request) {
 	httpResp, err := client.Do(backendReq)
 	if err != nil {
 		b.Logger.Error("backend-update-resp", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -230,7 +243,7 @@ func (b BuddyHandler) update(w http.ResponseWriter, req *http.Request) {
 	w.Write(data)
 }
 
-func (b BuddyHandler) bind(w http.ResponseWriter, req *http.Request) {
+func (b AppHandler) bind(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 	bindID := vars["binding_id"]
@@ -241,7 +254,7 @@ func (b BuddyHandler) bind(w http.ResponseWriter, req *http.Request) {
 	backendReq, err := http.NewRequest("PUT", url, buffer)
 	if err != nil {
 		b.Logger.Error("backend-binding-req", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -252,7 +265,7 @@ func (b BuddyHandler) bind(w http.ResponseWriter, req *http.Request) {
 	httpResp, err := client.Do(backendReq)
 	if err != nil {
 		b.Logger.Error("backend-binding-resp", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -266,7 +279,7 @@ func (b BuddyHandler) bind(w http.ResponseWriter, req *http.Request) {
 	return
 }
 
-func (b BuddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
+func (b AppHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	instanceID := vars["instance_id"]
 	bindingID := vars["binding_id"]
@@ -278,7 +291,7 @@ func (b BuddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	backendReq, err := http.NewRequest("DELETE", url, buffer)
 	if err != nil {
 		b.Logger.Error("backend-unbinding-req", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -289,7 +302,7 @@ func (b BuddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	httpResp, err := client.Do(backendReq)
 	if err != nil {
 		b.Logger.Error("backend-unbinding-resp", err)
-		b.respond(w, http.StatusInternalServerError, ErrorResponse{
+		b.respond(w, http.StatusInternalServerError, errorResponse{
 			Description: err.Error(),
 		})
 		return
@@ -302,12 +315,12 @@ func (b BuddyHandler) unbind(w http.ResponseWriter, req *http.Request) {
 	w.Write(data)
 }
 
-func (b BuddyHandler) reject(w http.ResponseWriter, r *http.Request) {
+func (b AppHandler) reject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	w.Write([]byte("Please provide a suffix in url"))
 }
 
-func (b BuddyHandler) respond(w http.ResponseWriter, status int, response interface{}) {
+func (b AppHandler) respond(w http.ResponseWriter, status int, response interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
