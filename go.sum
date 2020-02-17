@@ -1,11 +1,14 @@
 code.cloudfoundry.org/lager v0.0.0-20160705185753-62951a8009ab h1:lamQId0GOSSGcen1F4v9UF5+uBdi64n5KgVkSTuT408=
 code.cloudfoundry.org/lager v0.0.0-20160705185753-62951a8009ab/go.mod h1:O2sS7gKP3HM2iemG+EnwvyNQK7pTSC6Foi4QiMp9sSk=
+github.com/golang/protobuf v0.0.0-20160930204858-df1d3ca07d2d h1:THgtaeKocdlJrzf0jwy5JNrYAk+YObQ/I5Rdmsvrxto=
 github.com/golang/protobuf v0.0.0-20160930204858-df1d3ca07d2d/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f h1:9oNbS1z4rVpbnkHBdPZU4jo9bSmrLpII768arSyMFgk=
 github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f/go.mod h1:kBGZzfjB9CEq2AlWe17Uuf7NDRt0dE0s8S51q0aT7Yg=
 github.com/gorilla/mux v0.0.0-20160229034056-c9e326e2bdec h1:R0S0TWRzctb//ovtKmZbXPysgnliOMIJrFbhYuxg8EY=
 github.com/gorilla/mux v0.0.0-20160229034056-c9e326e2bdec/go.mod h1:1lud6UwP+6orDFRuTfBEV8e9/aOM/c4fVVCaMa2zaAs=
+github.com/onsi/ginkgo v1.2.1-0.20160219021059-ac3d45ddd7ef h1:0Am1qrPbmu7w7wLdGzTboBUr/tKT209PzJMQU7MbST8=
 github.com/onsi/ginkgo v1.2.1-0.20160219021059-ac3d45ddd7ef/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+WWjE=
+github.com/onsi/gomega v0.0.0-20160222031234-a1094b2db2d4 h1:aC43rmDz3hWtyXD4Hi5Hfzq2IVDik3eosq9f6yhhVGM=
 github.com/onsi/gomega v0.0.0-20160222031234-a1094b2db2d4/go.mod h1:C1qb7wdrVGGVU+Z6iS04AVkA3Q65CEZX59MT0QO5uiA=
 github.com/pivotal-cf/brokerapi v0.0.0-20161028102657-3dcb3e88faf1 h1:zRUe4sFMJMRiaUwl1Zzt6Ws7DcebZMa9UOIWxE9SnY4=
 github.com/pivotal-cf/brokerapi v0.0.0-20161028102657-3dcb3e88faf1/go.mod h1:P+oA8NvkCTkq2t4DohBiyqQo69Ub15RKGcm/vKNP0gg=
